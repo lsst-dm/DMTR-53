@@ -179,6 +179,37 @@ AG-00-25 & & comment \\\hline
 \label{sect:detailed}
 
 \subsection{AG-00-00}
+
+The string \texttt{Ok} was returned when executing
+
+\begin{verbatim}
+  $ python bin/compare expected/Linux64/detected-sources.txt
+\end{verbatim}
+
+after running the \texttt{demo.sh} on both the cluster head node (\texttt{lsst-dev01}) and on an example compute node.
+
+One \texttt{pytest} error was encountered by \texttt{ap\_verify}:
+
+\begin{verbatim}
+______________________ MeasureRuntimeTestSuite.test_valid ______________________
+
+self = <test_profiling.MeasureRuntimeTestSuite testMethod=test_valid>
+
+    def test_valid(self):
+        """Verify that timing information can be recovered.
+            """
+        meas = measure_runtime(self.task.getFullMetadata(), task_name='isr', metric_name='ip_isr.IsrTime')
+        self.assertIsInstance(meas, Measurement)
+        self.assertEqual(meas.metric_name, lsst.verify.Name(metric='ip_isr.IsrTime'))
+>       self.assertGreater(meas.quantity, 0.0 * u.second)
+E       AssertionError: <Quantity 0.0 s> not greater than <Quantity 0.0 s>
+
+tests/test_profiling.py:54: AssertionError
+============================= 29 tests deselected ==============================\end{verbatim}
+
+This is a unit test limitation already reported 
+in \texttt{DM-12848} and does not affect the functionality of the package.
+
 \subsection{AG-00-05}
 \subsection{AG-00-10}
 \subsection{AG-00-15}
