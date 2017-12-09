@@ -1,0 +1,193 @@
+\documentclass[DM,lsstdraft,STR,toc]{lsstdoc}
+\input meta.tex
+
+\begin{document}
+
+\def\milestoneName{Alert Generation}
+\def\milestoneId{LDM-503-3}
+\def\product{LSST Alert Production System}
+
+\setDocCompact{true}
+
+\title[\milestoneId{}~Test Report]{\milestoneId{} (\milestoneName{})~Test Report}
+\setDocRef{\lsstDocType-\lsstDocNum}
+\setDocDate{\vcsdate}
+\setDocUpstreamLocation{\url{https://github.com/lsst/lsst-texmf/examples}}
+\author{% `git log --pretty=%an | sort --key=2 | uniq` ?
+  Eric C.\ Bellm
+}
+
+% Most recent last
+\setDocChangeRecord{
+	\addtohist{1}{2017-12-08}{Initial version.}{Bellm}
+}
+
+
+\setDocCurator{Eric C. Bellm}
+\setDocUpstreamLocation{\url{https://github.com/lsst-dm/\lsstDocType-\lsstDocNum}}
+\setDocUpstreamVersion{\vcsrevision}
+
+
+\setDocAbstract{
+This is the test report for \milestoneId{} (\milestoneName{}), an LSST DM level 2 milestone pertaining to the \product{}.
+}
+
+\maketitle
+
+\section{Introduction}
+\label{sect:intro}
+
+\subsection{Objectives}
+\label{sect:objectives}
+
+This document describes the results of tests carried out in late (calendar) 2017 on the \product{} in order to assess progress against the LSST DM level 2 milestone \milestoneId{}.
+We report on the success or failure of applicable test cases and assess the state of the software and services tested.
+
+\subsection{Scope}
+\label{sect:scope}
+
+The overall test plan for the LSST Data Management system is described in \citeds{LDM-503}.
+This document specifically refers to the late (calendar) 2017 milestone \milestoneId{}, which tests the \product{}.
+The overall \product{} test specification is defined in \citeds{LDM-534}.
+The test plan for \milestoneId{} involves the execution of the entire AP-00
+(Small Scale Alert Generation Processing) specification, including the following
+test cases:
+
+\begin{description}
+
+  \item[AG-00-00]{Installation of the Alert Generation science payload}
+  \item[AG-00-05]{Alert Generation Produces Required Data Products}
+  \item[AG-00-10]{Scientific Verification of Processed Visit Images}
+  \item[AG-00-15]{Scientific Verification of Difference Images}
+  \item[AG-00-20]{Scientific Verification of DIASource Catalog}
+  \item[AG-00-25]{Scientific Verification of DIAObject Catalog}
+
+\end{description}
+
+\subsection{System Overview}
+\label{sect:systemoverview}
+
+The \product{} is that part of the LSST Data Management system which will be responsible for nightly data processing during LSST operations.
+The most prominent example of such processing is the generation of alerts from LSST difference images.
+However, the \product{} is also responsible for the distribution and filtering of alerts, excecution of precovery and forced photometry measurements, execution of the MOPS payload, and for the Level 1 Quality Control Service (\citeds{LDM-148}).
+The \milestoneId{} milestone focuses only on the alert generation part of the system.
+
+Note that we may broadly think of the \product{} as consisting of two independent parts: the Prompt Processing and Batch Production Services, which provides scheduling and workflow services, and the Science Payloads, which contain the algorithmic content.
+The \milestoneId{} milestone exercises only the science payloads.
+
+\subsection{Applicable Documents}
+\label{sect:appdocs}
+\addtocounter{table}{-1}
+
+\begin{tabular}[htb]{l l}
+\citeds{LDM-294} & LSST DM Project Management Plan\\
+\citeds{LDM-503} & DM Test Plan\\
+\citeds{LDM-533} & \product{} Test Specification\\
+\end{tabular}
+
+\subsection{References}
+\label{sect:references}
+
+\renewcommand{\refname}{}
+\bibliography{lsst,refs,books,refs_ads}
+
+\subsection{Document Overview}
+\label{sect:docoverview}
+
+Section \ref{sect:configuration} of this document provides details of the \product{} baseline used for this test, including relevant hardware and software configurations.
+Section \ref{sect:personnel} lists the individuals involved in performing the tests.
+Section \ref{sect:overview} provides an overview of the test results, while Section \ref{sect:detailed} provides more detailed results from each individual test case.
+
+\section{Test Configuration}
+\label{sect:configuration}
+
+\subsection{Documents}
+
+This test report refers to the execution of tests AG-00-00 through AG-00-25 in \citeds{LDM-533}.
+
+\begin{note}
+At time of writing, LDM-533 has not been baselined, so a detailed version
+number is not available.
+\end{note}
+
+\subsection{Hardware}
+\label{sect:hwconf}
+
+All tests were executed on systems in the LSST Data Facility.
+
+Software installation (AG-00-00) and scientific analysis work (AG-00-05 through DRP-00-25) were carried out on \texttt{lsst-dev01.ncsa.illinois.edu}.
+At time of text execution, this was a Dell PowerEdge R730 with 24 physical Intel Xeon E5-2690v3 CPU cores at 2.60\,GHz and 256\,GB of RAM.
+
+Bulk data processing (part of AG-00-05) was carried out on the LSST Verification Cluster (VC).
+At the time of test execution, the VC provided 48 Dell C6320 nodes, each with 24 physical Intel Xeon E5-2680v3 CPU cores at 2.50\,GHz and 128\,GB of RAM.
+
+\subsection{Software}
+\label{sect:swconf}
+
+All systems used for testing --- including both \texttt{lsst-dev01} and the VC nodes --- were running CentOS Linux release 7.4.1708.
+The \texttt{devtoolset-6}\footnote{\url{https://access.redhat.com/documentation/en-us/red_hat_developer_toolset/6/html/6.0_release_notes/}} toolchain, including GCC\footnote{\url{https://gcc.gnu.org/}} version 6.3.1, was enabled throughout these tests.
+
+\subsection{Input Data}
+\label{sect:inputdata}
+
+Input data for all tests was based on the DeCAM “HiTS” dataset, as described in \citeds{LDM-533}.
+
+\section{Personnel}
+\label{sect:personnel}
+
+All test cases were executed by Eric Bellm (University of Washington).
+
+\newpage
+
+\section{Overview of the Test Results}
+\label{sect:overview}
+
+\subsection{Summary Table}
+\label{sect:summarytable}
+
+\begin{longtable} {|p{0.2\textwidth}|p{0.2\textwidth}|p{0.6\textwidth}|}\hline
+{\bf TEST CASE ID} & {\bf PASS/FAIL} & {\bf COMMENTS} \\\hline
+AG-00-00 & & comment \\\hline
+AG-00-05 & & comment \\\hline
+AG-00-10 & & comment \\\hline
+AG-00-15 & & comment \\\hline
+AG-00-20 & & comment \\\hline
+AG-00-25 & & comment \\\hline
+\end{longtable}
+
+\subsection{Overall Assessment \label{sect:overallassessment}}
+\begin{itemize}
+\item Provide an overall assessment of the software as demonstrated by the test results in this report
+\item Identify any remaining deficiencies, limitations or constraints that were detected by the testing performed
+\item For each remaining deficiency, limitation or constraint describe:
+\begin{itemize}
+\item Its impact on software and system performance, including identification of requirements not met
+\item The impact on software and system design to correct it
+\item A recommended solution/approach for correcting it
+\item Mantis issue
+\end{itemize}
+\end{itemize}
+
+\subsection{Impact of Test Environment}
+\label{sect:impact}
+
+\subsection{Recommended Improvements}
+\label{sect:recommendations}
+
+
+\section{Detailed Test Results}
+\label{sect:detailed}
+
+\subsection{AG-00-00}
+\subsection{AG-00-05}
+\subsection{AG-00-10}
+\subsection{AG-00-15}
+\subsection{AG-00-20}
+\subsection{AG-00-25}
+
+\appendix
+
+\newpage
+\section{Detailed tests results}
+
+\end{document}
