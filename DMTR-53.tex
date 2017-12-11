@@ -211,6 +211,31 @@ This is a unit test limitation already reported
 in \texttt{DM-12848} and does not affect the functionality of the package.
 
 \subsection{AG-00-05}
+
+We performed a Butler \texttt{get} for \texttt{calexp}, \texttt{deepDiff\_differenceExp}, and \texttt{deepDiff\_diaSrc} dataset types using 
+dataIds constructed all visits and ccds listed in the appendix of \citeds{LDM-533}.
+
+We found several dataIds where products were not generated:  
+
+\begin{itemize}
+	\item For visits 411321, 411371, and 411422, ccds 48--60 and 62 were missing all three of \texttt{calexp}, \texttt{deepDiff\_differenceExp}, and \texttt{deepDiff\_diaSrc} products.  This failure was due to the time limit being reached on the slurm execution script (which looped sequentially over ccds for each visit).
+	\item For visit 411657, ccd 47 only was missing all three products.  Inspecting the log revealed an error:
+		\begin{verbatim}  
+File "/software/lsstsw/stack3_20171023/stack/miniconda3-4.3.21-10a4fa6/
+Linux64/meas_algorithms/14.0-7-g23fdbe95+15/python/lsst/meas/algorithms/
+measureApCorr.py", line 251, in run
+    (name, len(subset2), self.config.minDegreesOfFreedom+1))
+RuntimeError: Unable to measure aperture correction for required algorithm 
+'base_PsfFlux': only 0 sources, but require at least 2.
+\end{verbatim}
+\end{itemize}
+
+
+We inspected the \texttt{DIAObject} table by opening the 
+\texttt{l1db/association.db} sqlite database produced by \texttt{ap\_pipe} 
+with \texttt{sqlite3}.  Issuing the query \texttt{select * from dia\_objects limit 10;} confirmed that the database was non-empty.
+
+
 \subsection{AG-00-10}
 \subsection{AG-00-15}
 \subsection{AG-00-20}
