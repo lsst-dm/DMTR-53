@@ -184,7 +184,6 @@ A minor subset of the expected products were not generated due to misconfigurati
 
 	\item{Crosstalk corrections should be integrated into the \texttt{ap\_pipe} pipeline.}
 	\item{Provenance information for difference images should be provided.}
-	\item{Mask propagation into difference images should be reviewed.}
 	\item{DIASource and DIAObject catalogs should be enhanced to contain all required attributes.}
 	\item{DMS-REQ-0270 is untestable as written.  
 		Further clarification of the criteria by which sub-threshold 
@@ -200,7 +199,7 @@ A minor subset of the expected products were not generated due to misconfigurati
 
 \textit{The Alert Generation Science Payload is available from documented channels: PASSED.}
 
-We note that general-user documentation was in review at the time of this test (DM-11592).
+We note that general-user documentation was in review at the time of this test (\jira{DM-11592}).
 
 \textit{The Alert Generation science payload can be installed on LSST Data Facility-managed systems: PASSED.}
 
@@ -232,7 +231,7 @@ tests/test_profiling.py:54: AssertionError
 ============================= 29 tests deselected ==============================\end{verbatim}
 
 This is a unit test limitation already reported 
-in \texttt{DM-12848} and does not affect the functionality of the package.
+in \jira{DM-12848} and does not affect the functionality of the package.
 
 \subsection{AG-00-05}
 
@@ -256,6 +255,12 @@ RuntimeError: Unable to measure aperture correction for required algorithm
 \end{verbatim}
 \end{itemize}
 
+We note the need for increased SLURM timelimits.
+
+The exception raised for visit 411657, ccd 47 was due to a failure to select
+sufficient stars for PSF modelling; we have created \jira{DM-13136} to 
+investigate the root cause of this failure.
+
 We inspected the \texttt{DIAObject} table by opening the 
 \texttt{l1db/association.db} sqlite database produced by \texttt{ap\_pipe} 
 with \texttt{sqlite3}.  Issuing the query \texttt{select * from dia\_objects limit 10;} confirmed that the database was non-empty.
@@ -266,7 +271,7 @@ with \texttt{sqlite3}.  Issuing the query \texttt{select * from dia\_objects lim
 \textit{Generated PVIs include science, mask, and variance images; background model; zeropoint; PSF, and WCS: PASSED}
 
 For all of the generated PVIs, we used Butler calls to check for the existence
-image, mask, and variance planes; zeropoints, PSFs, and WCS; and background models.
+image, mask, and variance planes; zeropoints, PSFs, and WCS. The background models are persisted separately, and were checked with appropriate Butler calls as well.
 
 All dataIds where data was generated in AG-00-05 had all of the required components.
 
@@ -278,7 +283,9 @@ visit 410915, ccds 3,  8, 23, 41, and 44.
 
 We used the Butler and DS9 to examine these PVIs.  We noted a few unmasked 
 bad columns as well as the effect of crosstalk; crosstalk correction for DECam
-was not enabled at the time of this processing.
+was not enabled at the time of this processing because the implementation 
+ticket was not yet completed (\jira{DM-10299}).  We created a new ticket
+to examine the bad column masking (\jira{DM-13081}).
 
 \subsection{AG-00-15}
 
@@ -290,7 +297,8 @@ exposures is available through current Butler interfaces.  While the input
 calexp can be reconstructed by matching dataIds from the processed image
 repository, determining the template applied requires a new call to
 \texttt{getCoaddAsTemplateTask}, with concomitant restrictions on 
-stack versioning, template respository association, etc.
+stack versioning, template repository association, etc.
+We have created a new ticket (\jira{DM-13085}) to improve this handling.
 
 For each difference image, we used Butler calls to confirm that the PSF matching kernel was stored.  No failures were reported from the generated images.
 
@@ -303,8 +311,9 @@ visit 410915, ccds 3,  8, 23, 41, and 44.
 We used the Butler and DS9 to compare the PVIs to the resulting differences. 
 The difference image masks were often modified relative to the PVIs, making 
 direct comparison more difficult.  In general the masks seemed to be propagated,
-although not all masks were--cosmic ray masks, for instance, did not appear 
-in the difference image.  It is unclear if this behavior is expected.
+although not all masks were---cosmic ray masks, for instance, did not appear 
+in the difference image.  This behavior was identified in concurrent 
+DRP milestone testing (DM-503-2) and has since been fixed (\jira{DM-9953}).
 
 
 \subsection{AG-00-20}
@@ -374,13 +383,13 @@ the identity of the Difference Exposure from which it was derived & FAIL & Only 
 \end{table}
 
 
-\textit{Faint DIASources satisfiying additional criteria are stored: FAILED}
+\textit{Faint DIASources satisfiying additional criteria are stored: DEVIATION}
 
 No specification for the ``additional criteria'' necessary to store 
 sub-threshold DIASources are available at this time; 
 this is a failure of requirements rather than of the pipelines.
 
-A new JIRA ticket, DM-12967, has been created to capture this issue.
+A new ticket, \jira{DM-12967}, has been created to capture this issue.
 
 \textit{Relevant derived quantities are provided in pre-computed columns: PASSED}
 
@@ -393,11 +402,11 @@ derived quantities and hence cannot be fully tested as written.
 
 \subsection{AG-00-25}
 
-\textit{Measurements are Presented in Flux Units: FAILED}
+\textit{Measurements are Presented in Flux Units: DEVIATION}
 
 No measurements (or aggregated measurements, such as means) 
 were contained in the the DIAObject table as implemented at the 
-time of the test.
+time of the test, so we could not test this case.
 
 \textit{Each DIAObject record contains required attributes: FAILED}
 
@@ -416,7 +425,9 @@ they require joint processing with DRP.
 
 By examining the schema of the implemented Level 1 database, we determined that only one DIAObject property is implemented at this time, a count of the number
 of DIASources matched to it.  However, all values in the column were 1, which 
-is not expected for a real astrophysical dataset.
+is not expected for a real astrophysical dataset.  This was identified as due
+to a bug in the association code and fixed in \jira{DM-13052}; the DIAObject 
+association was performed correctly but the property was not updated.
 
 
 From DMS-REQ-0272, the required summary attributes include: 
@@ -427,17 +438,25 @@ None of these attributes are contained in the Level 1 database
 implemented as of this test.
 
 
-\textit{Each DIAObject record characterizes varability using DIASources contained in the required time interval: FAILED}
+\textit{Each DIAObject record characterizes varability using DIASources contained in the required time interval: DEVIATION}
 
 The timeseries features to be computed on DIAObjects have not been finalized
-(cf.\ DM-11962), and a minimal subset has yet to be implemented.  Accordingly
-as of this writing there are no variability metrics computed on the DIAObjects.
+(cf.\ \jira{DM-11962}), and a minimal subset has yet to be implemented.  Accordingly
+as of this writing there are no variability metrics computed on the DIAObjects 
+and we cannot test the time interval.
 
 \textit{Relevant derived quantities are provided in pre-computed columns: FAILED}
 
 No derived quantities of any type are contained in the Level 1 database 
 implemented as of this test, although we note that which
 columns are required is poorly specified.
+
+\section{Deviations from test cases/procedures}
+
+\subsection{AG-00-00}
+
+None.
+
 
 
 \end{document}
