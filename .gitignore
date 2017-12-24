@@ -1,3 +1,7 @@
+# Build products:
+DMTR-53.pdf
+meta.tex
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
