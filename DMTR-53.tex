@@ -19,7 +19,7 @@
 
 % Most recent last
 \setDocChangeRecord{
-	\addtohist{1}{2017-12-08}{Initial version.}{Bellm}
+    \addtohist{1}{2017-12-08}{Initial version.}{Bellm}
 }
 
 
@@ -48,7 +48,7 @@ We report on the success or failure of applicable test cases and assess the stat
 
 The overall test plan for the LSST Data Management system is described in \citeds{LDM-503}.
 This document specifically refers to the late (calendar) 2017 milestone \milestoneId{}, which tests the \product{}.
-The overall \product{} test specification is defined in \citeds{LDM-534}.
+The overall \product{} test specification is defined in \citeds{LDM-533}.
 The test plan for \milestoneId{} involves the execution of the entire AP-00
 (Small Scale Alert Generation Processing) specification, including the following
 test cases:
@@ -72,7 +72,7 @@ The most prominent example of such processing is the generation of alerts from L
 However, the \product{} is also responsible for the distribution and filtering of alerts, excecution of precovery and forced photometry measurements, execution of the MOPS payload, and for the Level 1 Quality Control Service (\citeds{LDM-148}).
 The \milestoneId{} milestone focuses only on the alert generation part of the system.
 
-Note that we may broadly think of the \product{} as consisting of two independent parts: the Prompt Processing and Batch Production Services, which provides scheduling and workflow services, and the Science Payloads, which contain the algorithmic content.
+Note that we may broadly think of the \product{} as consisting of two independent parts: the Prompt and Offline Processing Services, which provide scheduling and workflow services, and the Science Payloads, which contain the algorithmic content.
 The \milestoneId{} milestone exercises only the science payloads.
 
 \subsection{Applicable Documents}
@@ -147,47 +147,322 @@ All test cases were executed by Eric Bellm (University of Washington).
 
 \begin{longtable} {|p{0.2\textwidth}|p{0.2\textwidth}|p{0.6\textwidth}|}\hline
 {\bf TEST CASE ID} & {\bf PASS/FAIL} & {\bf COMMENTS} \\\hline
-AG-00-00 & & comment \\\hline
-AG-00-05 & & comment \\\hline
-AG-00-10 & & comment \\\hline
-AG-00-15 & & comment \\\hline
-AG-00-20 & & comment \\\hline
-AG-00-25 & & comment \\\hline
+AG-00-00 & Pass & Refer to \S\ref{sect:ag-00-00}. \\\hline
+AG-00-05 & Pass & One CCD improperly processed, some command executions incomplete due to inappropriate cluster configuration. Test goals substantially met. Refer to \S\ref{sect:ag-00-05}. \\\hline
+AG-00-10 & Partial Pass & Some improvements in instrument signature removal needed; \S\ref{sect:ag-00-10} \\\hline
+AG-00-15 & Fail & Missing provenance information for difference images. Refer to \S\ref{sect:ag-00-15}. \\\hline
+AG-00-20 & Pass & Many required DIASource catalog columns are not implemented. However, this is expected for the current stage of development. Refer to \S\ref{sect:ag-00-20}. \\\hline
+AG-00-25 & Pass & Many required DIAObject catalog columns are not implemented. However, this is expected for the current stage of development. Refer to \S\ref{sect:ag-00-25}. \\\hline
 \end{longtable}
 
 \subsection{Overall Assessment \label{sect:overallassessment}}
-\begin{itemize}
-\item Provide an overall assessment of the software as demonstrated by the test results in this report
-\item Identify any remaining deficiencies, limitations or constraints that were detected by the testing performed
-\item For each remaining deficiency, limitation or constraint describe:
-\begin{itemize}
-\item Its impact on software and system performance, including identification of requirements not met
-\item The impact on software and system design to correct it
-\item A recommended solution/approach for correcting it
-\item Mantis issue
-\end{itemize}
-\end{itemize}
 
-\subsection{Impact of Test Environment}
-\label{sect:impact}
+\begin{itemize}
+    \item Installation of the Alert Production pipelines was accomplished without difficulty.
+    \item Execution of the Alert Production pipelines was generally successful.
+    A minor subset of the expected products were not generated due to misconfiguration of the batch processing system, but this is not the mode of execution planned for operations.
+    \item The resulting Processed Visit Images are appropriately processed and masked, in general, but some improvements in ISR are necessary. In particular, crosstalk corrections are not applied, and some masks are missing.
+    \item Required provenance information for difference images are absent, and should be corrected once SuperTask and the new Butler are finalized.
+    \item The DIASource catalogs only contain a subset of the many attributes required (see Table \ref{tab:diasrc}).
+    \item The DIAObject catalogs at present only implement raw source association; all ``lightcurve'' features and related summary/aggregate information is missing.
+\end{itemize}
 
 \subsection{Recommended Improvements}
 \label{sect:recommendations}
 
+\begin{itemize}
+
+    \item{The Alert Production pipelines should be integrated into \texttt{lsst\_distrib} and high-level documentation provided through \url{pipelines.lsst.io}.}
+    \item{Crosstalk corrections should be integrated into the \texttt{ap\_pipe} pipeline.}
+    \item{Provenance information for difference images should be provided.}
+    \item{DIASource and DIAObject catalogs should be enhanced to contain all required attributes.}
+    \item{DMS-REQ-0270 is untestable as written.
+        Further clarification of the criteria by which sub-threshold
+        DIASources are selected to be stored should be defined.}
+    \item{DMS-REQ-0331 should be clarified or enhanced---which models should have goodness of fit stored?  Which color-color diagrams?  Are there other quantities of interested that should be required?}
+
+\end{itemize}
 
 \section{Detailed Test Results}
 \label{sect:detailed}
 
 \subsection{AG-00-00}
+\label{sect:ag-00-00}
+
+\textit{The Alert Generation Science Payload is available from documented channels: PASSED.}
+
+We note that general-user documentation was in review at the time of this test (\jira{DM-11592}).
+
+\textit{The Alert Generation science payload can be installed on LSST Data Facility-managed systems: PASSED.}
+
+The string \texttt{Ok} was returned when executing
+
+\begin{verbatim}
+  $ python bin/compare expected/Linux64/detected-sources.txt
+\end{verbatim}
+
+after running the \texttt{demo.sh} on both the cluster head node (\texttt{lsst-dev01}) and on an example compute node.
+
+One \texttt{pytest} error was encountered by \texttt{ap\_verify}:
+
+\begin{verbatim}
+______________________ MeasureRuntimeTestSuite.test_valid ______________________
+
+self = <test_profiling.MeasureRuntimeTestSuite testMethod=test_valid>
+
+    def test_valid(self):
+        """Verify that timing information can be recovered.
+            """
+        meas = measure_runtime(self.task.getFullMetadata(), task_name='isr', metric_name='ip_isr.IsrTime')
+        self.assertIsInstance(meas, Measurement)
+        self.assertEqual(meas.metric_name, lsst.verify.Name(metric='ip_isr.IsrTime'))
+>       self.assertGreater(meas.quantity, 0.0 * u.second)
+E       AssertionError: <Quantity 0.0 s> not greater than <Quantity 0.0 s>
+
+tests/test_profiling.py:54: AssertionError
+============================= 29 tests deselected ==============================\end{verbatim}
+
+This is a unit test limitation already reported in \jira{DM-12848} and does not affect the functionality of the package.
+
 \subsection{AG-00-05}
+\label{sect:ag-00-05}
+
+\textit{Execution of the Alert Generation Pipelines produces the expected data products: PASSED}
+
+We performed a Butler \texttt{get} for \texttt{calexp}, \texttt{deepDiff\_differenceExp}, and \texttt{deepDiff\_diaSrc} dataset types using dataIds constructed all visits and CCDs listed in the appendix of \citeds{LDM-533}.
+
+We found several dataIds where products were not generated:
+
+\begin{itemize}
+    \item For visits 411321, 411371, and 411422, CCDs 48--60 and 62 were missing all three of \texttt{calexp}, \texttt{deepDiff\_differenceExp}, and \texttt{deepDiff\_diaSrc} products.  This failure was due to the time limit being reached on the slurm execution script (which looped sequentially over CCDs for each visit).
+    \item For visit 411657, CCD 47 only was missing all three products.  Inspecting the log revealed an error:
+        \begin{verbatim}
+File "/software/lsstsw/stack3_20171023/stack/miniconda3-4.3.21-10a4fa6/
+Linux64/meas_algorithms/14.0-7-g23fdbe95+15/python/lsst/meas/algorithms/
+measureApCorr.py", line 251, in run
+    (name, len(subset2), self.config.minDegreesOfFreedom+1))
+RuntimeError: Unable to measure aperture correction for required algorithm
+'base_PsfFlux': only 0 sources, but require at least 2.
+\end{verbatim}
+\end{itemize}
+
+We note the need for increased SLURM timelimits in future executions of this
+test case. However, this is not regarded as fatal to the overall execution
+of this test case.
+
+The exception raised for visit 411657, CCD 47 was due to a failure to select
+sufficient stars for PSF modeling. The root cause of this issue is under
+investigation on \jira{DM-13136}. It is not regarded as critical to the
+successful execution of this test case.
+
+We inspected the \texttt{DIAObject} table by opening the
+\texttt{l1db/association.db} sqlite database produced by \texttt{ap\_pipe}
+with \texttt{sqlite3}. Issuing the query \texttt{select * from dia\_objects limit 10;} confirmed that the database was non-empty.
+
 \subsection{AG-00-10}
+\label{sect:ag-00-10}
+
+\textit{Generated PVIs include science, mask, and variance images; background model; zeropoint; PSF, and WCS: PASSED}
+
+For all of the generated PVIs, we used Butler calls to check for the existence
+image, mask, and variance planes; zeropoints, PSFs, and WCS. The background models are persisted separately, and were checked with appropriate Butler calls as well.
+
+All dataIds where data was generated in AG-00-05 had all of the required components.
+
+\textit{Masks and background are appropriately applied: PARTIALLY PASSED}
+
+We chose two visits and five CCDs at random:
+visit 411673, CCDs 15, 32, 45, 55, and 57, and
+visit 410915, CCDs 3,  8, 23, 41, and 44.
+
+We used the Butler and DS9 to examine these PVIs.
+
+We note that crosstalk correction for DECam was not enabled at the time of
+processing, pending the implementation of ticket \jira{DM-10299}.
+
+We note that some evidently bad columns were left unmasked. This has been
+ticketed for investigation as \jira{DM-10381}, which will be scheduled with
+upcoming development work. These bad columns were regarded as falling outside
+the acceptable levels for this test.
+
 \subsection{AG-00-15}
+\label{sect:ag-00-15}
+
+\textit{Difference images include provenance information relating to the 
+identity of the input exposures and the PSF matching kernel:  FAILED}
+
+No direct provenance information about the identity of the calexp and template
+exposures is available through current Butler interfaces.  While the input
+calexp can be reconstructed by matching dataIds from the processed image
+repository, determining the template applied requires a new call to
+\texttt{getCoaddAsTemplateTask}, with concomitant restrictions on
+stack versioning, template repository association, etc.
+We have created a new ticket (\jira{DM-13085}) to improve this handling.
+
+For each difference image, we used Butler calls to confirm that the PSF matching kernel was stored.  No failures were reported from the generated images.
+
+\textit{Masks are correctly propagated from the input image: PASSED}
+
+We used the visits and CCDs from AG-00-10:
+visit 411673, CCDs 15, 32, 45, 55, and 57, and
+visit 410915, CCDs 3,  8, 23, 41, and 44.
+
+We used the Butler and DS9 to compare the PVIs to the resulting differences.
+The difference image masks were often modified relative to the PVIs, making
+direct comparison more difficult. However, masks were seen to be propagated,
+with the notable exception of comsmic ray masks. This behaviour was identified
+in concurrent DRP milestone testing (\citeds{DMTR-51}), where it was not
+regarded as fatal to successful execution; it has subsequently been resolved
+(\jira{DM-9953}).
+
 \subsection{AG-00-20}
+\label{sect:ag-00-20}
+
+\textit{Measurements are Presented in Flux Units: PASSED }
+
+For all of the generated DIASource catalogs, we used Butler calls to check for
+the existence of \texttt{PsfFlux} or \texttt{ApFlux} entries.  No failures were
+reported from the generated catalogs.
+
+\textit{Each DIASource record contains required attributes: PASSED}
+
+DMS-REQ-0269 requires many attributes, which are summarized in Table
+\ref{tab:diasrc}.  We determined which attributes were present by manually
+examining a randomly selected DIASource record retrieved from the Butler.
+
+Many of the attributes required by DMS-REQ-0269 were not present. However, this
+is expected for the current stage of development. We verified that all
+attributes which are expected to be generated by the codebase at present were
+properly present. Those attributes which are missing will be added by future
+development work.
+
+\begin{table}[h]
+    \begin{tabular}{|p{0.4\textwidth}|c|p{0.4\textwidth}|}
+        \hline
+        Attribute & Pass/Fail & Comment \\
+        \hline\hline
+        the identity of the Difference Exposure from which it was derived & FAIL & Only implicitly available by reconstructing dataId \\
+        \hline
+        the identity of the associated SSObject, if any & FAIL & Out of scope for this test; but no column is present \\
+        \hline
+        the identity of the parent Source from which this DIASource has been deblended, if any & PASS & \texttt{parent} column is present \\
+        \hline
+        epoch of the observation & FAIL & not present in the catalog (requires denormalization from higher-level metadata) \\
+        \hline
+        focal plane position centroid and error (pixel) & PASS &
+        \texttt{base\_SdssCentroid\_x},
+        \texttt{base\_SdssCentroid\_y},
+        \texttt{base\_SdssCentroid\_xSigma}, \&
+        \texttt{base\_SdssCentroid\_ySigma} \\
+        \hline
+        sky position and associated error (radec) & FAIL & \texttt{coord\_ra} and \texttt{coord\_dec} are present, but no error is reported \\
+        \hline
+        SNR of the detection & FAIL & no SNR is reported \\
+        \hline
+        calibrated PS flux and associated error & PASS & \texttt{base\_PsfFlux\_flux} and \texttt{base\_PsfFlux\_fluxSigma} \\
+        \hline
+        likelihood of the observed data given the PS model & FAIL & not present in the catalog \\
+        \hline
+        calibrated aperture flux and associated error & PASS & several values of \texttt{base\_CircularApertureFlux\_*} are present with errors \\
+        \hline
+        calibrated flux and associated error for a trailed source model & FAIL & not present in the catalog \\
+        \hline
+        length and angle of the trail & FAIL & not present in the catalog \\
+        \hline
+        flux and associated parameters for a dipole model & PASS & several dipole flux values are present \\
+        \hline
+        parameters of an adaptive shape measurement and associated error & PASS & \texttt{base\_SdssShape\_*} \\
+        \hline
+        a measure of source extendedness & FAIL & not present in the catalog \\
+        \hline
+        the estimated background at the position of the object in the template image with associated uncertainty & FAIL & not present in the catalog \\
+        \hline
+        a measure of spuriousness & FAIL &  not present in the catalog \\
+        \hline
+        flags indicating problems encountered while computing the aforementioned attributes & PASS & many flags are present \\
+        \hline
+        calibrated flux and associated error for the DIAsource as measured on the Visit image & FAIL & not present in the catalog \\
+        \hline
+    \end{tabular}
+    \caption{DIASource attributes, per AG-00-20. \label{tab:diasrc}}
+\end{table}
+
+\textit{Faint DIASources satisfiying additional criteria are stored: N/A}
+
+This test was not performed, due to inadequate requirements specification. Refer to \S\ref{sect:deviation-ag-00-20}.
+
+\textit{Relevant derived quantities are provided in pre-computed columns: PASSED}
+
+Examination of the DIASource record shows two entries,
+\texttt{ip\_diffim\_PsfDipoleFlux\_chi2dof} and
+\texttt{ip\_diffim\_DipoleFit\_chi2dof}, which provide goodness of fit measures
+as required.  Color-color diagrams are not relevant for single-visit DIASource
+catalogs. The requirement does not specify an exhaustive list of relevant
+derived quantities and hence cannot be fully tested as written.
+
 \subsection{AG-00-25}
+\label{sect:ag-00-25}
 
-\appendix
+\textit{DIAObjects are recorded with unique identifiers: PASSED}
 
-\newpage
-\section{Detailed tests results}
+This was verified by comparing the output of \texttt{select count(distinct(id))
+from dia\_objects;} and \texttt{select count(id) from dia\_objects;} on the
+Level 1 database. Both returned 546688 objects.
+
+\textit{Measurements are Presented in Flux Units: N/A}
+
+This test was not performed, as no relevant quantities were stored in the DIAObject table. Refer to \S\ref{sect:deviation-ag-00-25}.
+
+\textit{Each DIAObject record contains contains an appropriate set of summary attributes: PASSED}
+
+The attributes linking to the Object catalog are out of scope for this test, as
+they require joint processing with DRP.
+
+The only DIAObject property implemented at the time of test execution was a count of the number of DIASources matched to it.
+However, all values in the column were 1, which is not expected for a real astrophysical dataset.
+This was identified as due to a bug whereby association was performed correctly but the metadata was not being appropriately updated.
+This issue was fixed in \jira{DM-13052}.
+
+\textit{Relevant derived quantities are provided in pre-computed columns: N/A}
+
+This test was not performed, as no relevant quantities were stored in the DIAObject table. Refer to \S\ref{sect:deviation-ag-00-25}.
+
+\section{Deviations from test cases/procedures}
+
+\subsection{AG-00-00}
+
+None.
+
+\subsection{AG-00-05}
+\label{sect:deviation-ag-00-05}
+
+None.
+
+\subsection{AG-00-10}
+\label{sect:deviation-ag-00-10}
+
+None.
+
+\subsection{AG-00-15}
+\label{sect:deviation-ag-00-15}
+
+None.
+
+\subsection{AG-00-20}
+\label{sect:deviation-ag-00-20}
+
+At time of carrying out the test, no ``additional critera'' per DMS-REQ-0270 had been specified, so no sub-threshold DIASources were stored.
+No test was therefore executed to check for the existence of this DIASources.
+A new ticket, \jira{DM-12967}, has been created to address the inadequacy of current requireents..
+
+\subsection{AG-00-25}
+\label{sect:deviation-ag-00-25}
+
+No measurements (or aggregated measurements, such as means) were contained in
+the the DIAObject table as implemented at the time of the test. It was
+therefore meaningless to test in which units they were stored.
+
+Similarly, no pre-computed derived quantities were stored as of this test.
+However, we note that no such quantities are well specified by current requirements documentation.
 
 \end{document}
