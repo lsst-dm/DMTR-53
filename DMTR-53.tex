@@ -1,4 +1,4 @@
-\documentclass[DM,lsstdraft,STR,toc]{lsstdoc}
+\documentclass[DM,STR,toc]{lsstdoc}
 \input meta.tex
 
 \begin{document}
@@ -11,15 +11,17 @@
 
 \title[\milestoneId{}~Test Report]{\milestoneId{} (\milestoneName{})~Test Report}
 \setDocRef{\lsstDocType-\lsstDocNum}
-\setDocDate{\vcsdate}
+\setDocDate{2018-01-12}
 \setDocUpstreamLocation{\url{https://github.com/lsst/lsst-texmf/examples}}
 \author{% `git log --pretty=%an | sort --key=2 | uniq` ?
-  Eric C.\ Bellm
+  Eric C.\ Bellm,
+  John D.\ Swinbank
 }
 
 % Most recent last
 \setDocChangeRecord{
-    \addtohist{1}{2017-12-08}{Initial version.}{Bellm}
+    \addtohist{1.0}{2018-01-11}{Initial version.}{Bellm, Swinbank}
+    \addtohist{1.1}{2018-01-12}{Released via \jira{RFC-429}}{T.~Jenness}
 }
 
 
@@ -103,12 +105,7 @@ Section \ref{sect:overview} provides an overview of the test results, while Sect
 
 \subsection{Documents}
 
-This test report refers to the execution of tests AG-00-00 through AG-00-25 in \citeds{LDM-533}.
-
-\begin{note}
-At time of writing, LDM-533 has not been baselined, so a detailed version
-number is not available.
-\end{note}
+This test report refers to the execution of tests AG-00-00 through AG-00-25 in \citeds{LDM-533} version 1.1.
 
 \subsection{Hardware}
 \label{sect:hwconf}
@@ -288,7 +285,7 @@ the acceptable levels for this test.
 \subsection{AG-00-15}
 \label{sect:ag-00-15}
 
-\textit{Difference images include provenance information relating to the 
+\textit{Difference images include provenance information relating to the
 identity of the input exposures and the PSF matching kernel:  FAILED}
 
 No direct provenance information about the identity of the calexp and template
@@ -451,15 +448,15 @@ None.
 \subsection{AG-00-20}
 \label{sect:deviation-ag-00-20}
 
-At time of carrying out the test, no ``additional critera'' per DMS-REQ-0270 had been specified, so no sub-threshold DIASources were stored.
-No test was therefore executed to check for the existence of this DIASources.
-A new ticket, \jira{DM-12967}, has been created to address the inadequacy of current requireents..
+At time of carrying out the test, no ``additional criteria'' per DMS-REQ-0270 had been specified, so no sub-threshold DIASources were stored.
+No test was therefore executed to check for the existence of these DIASources.
+A new ticket, \jira{DM-12967}, has been created to address the inadequacy of current requirements.
 
 \subsection{AG-00-25}
 \label{sect:deviation-ag-00-25}
 
 No measurements (or aggregated measurements, such as means) were contained in
-the the DIAObject table as implemented at the time of the test. It was
+the DIAObject table as implemented at the time of the test. It was
 therefore meaningless to test in which units they were stored.
 
 Similarly, no pre-computed derived quantities were stored as of this test.
